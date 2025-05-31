@@ -67,7 +67,19 @@ async fn main() -> Result<()> {
                         .short('u')
                         .long("username")
                         .help("Your customer id")
-                        .required(true)
+                )
+                .arg(
+                    Arg::new("password")
+                        .short('p')
+                        .long("password")
+                        .help("Save your password (optional, will prompt if not provided)")
+                        .action(clap::ArgAction::SetTrue)
+                )
+                .arg(
+                    Arg::new("clear-password")
+                        .long("clear-password")
+                        .help("Clear the saved password")
+                        .action(clap::ArgAction::SetTrue)
                 )
         )
         // .subcommand( // interactive mode

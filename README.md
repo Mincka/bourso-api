@@ -75,11 +75,34 @@ cargo build --release
 ## Usage
 
 ### Configuration
-Save your client ID with this config command:
+Configure your credentials using the config command:
+
+Set your customer ID:
+```
+./bourso-cli config --username <your_customer_id>
+```
+
+Optionally, save your password to avoid entering it each time:
+```
+./bourso-cli config --password
+```
+
+You can also set both at once:
+```
+./bourso-cli config --username <your_customer_id> --password
+```
+
+View current configuration:
 ```
 ./bourso-cli config
 ```
-The password will be asked each time you run the app to avoid storing it in a file.
+
+Clear a saved password:
+```
+./bourso-cli config --clear-password
+```
+
+If no password is saved, it will be prompted each time you run the app.
 
 ### Get your accounts
 ```
@@ -188,7 +211,7 @@ Register-ScheduledTask -TaskName "Weekly Bourso CLI Task" -Trigger $trigger -Act
 ```
 
 ## Security
-This app runs locally. All outbound/inbound data is sent/received to/from BoursoBank servers **only**. Your password will not be saved locally and will be asked each time you run the app. Your client ID has to be configurated and will be saved into the app data for next usages.
+This app runs locally. All outbound/inbound data is sent/received to/from BoursoBank servers **only**. Your password can optionally be saved locally in a settings file for convenience, or you can choose to be prompted for it each time. Your client ID is saved in the app data for subsequent usage.
 
 ## Disclaimer
 

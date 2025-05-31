@@ -34,15 +34,55 @@ pub async fn parse_matches(matches: ArgMatches) -> Result<()> {
     match matches.subcommand() {
         // These matches do not require authentication
         Some(("config", config_matches)) => {
-            let customer_id = config_matches
-                .get_one::<String>("username")
-                .map(|s| s.as_str())
-                .unwrap();
-            save_settings(&Settings {
-                customer_id: Some(customer_id.to_string()),
+            let mut current_settings = get_settings().unwrap_or(Settings {
+                customer_id: None,
                 password: None,
-            })?;
-            info!("Configuration saved ✅");
+            });
+            
+            if config_matches.get_flag("clear-password") {
+                current_settings.password = None;
+                save_settings(&current_settings)?;
+                info!("Password cleared ✅");
+                return Ok(());
+            }
+            
+            let mut settings_changed = false;
+            
+            if let Some(customer_id) = config_matches.get_one::<String>("username") {
+                current_settings.customer_id = Some(customer_id.to_string());
+                settings_changed = true;
+            }
+            
+            if config_matches.get_flag("password") {
+                info!("Please enter your password (it will be saved securely):");
+                let password = rpassword::prompt_password("Enter your password: ")
+                    .context("Failed to read password")?
+                    .trim()
+                    .to_string();
+                current_settings.password = Some(password);
+                info!("Password saved ✅");
+                settings_changed = true;
+            }
+            
+            if settings_changed {
+                save_settings(&current_settings)?;
+                info!("Configuration saved ✅");
+            } else {
+                // Show current configuration
+                info!("Current configuration:");
+                match &current_settings.customer_id {
+                    Some(id) => info!("  Username: {}", id),
+                    None => info!("  Username: Not set"),
+                }
+                match &current_settings.password {
+                    Some(_) => info!("  Password: Saved"),
+                    None => info!("  Password: Not saved"),
+                }
+                info!("To change settings, use:");
+                info!("  bourso config --username <customer_id>");
+                info!("  bourso config --password");
+                info!("  bourso config --clear-password");
+            }
             return Ok(());
         }
         Some(("quote", quote_matches)) => {
@@ -132,7 +172,14 @@ pub async fn parse_matches(matches: ArgMatches) -> Result<()> {
     );
     info!("If you want to change it, run `bourso config --username <customer_id>`");
     println!("");
-    info!("We'll need your password to log you in. It will not be stored anywhere and will be asked everytime you run a command. The password will be hidden while typing.");
+    
+    let password_saved = settings.password.is_some();
+    if password_saved {
+        info!("Using saved password. To clear it, run `bourso config --clear-password`");
+    } else {
+        info!("Password not saved. To save it, run `bourso config --password`");
+        info!("The password will be hidden while typing.");
+    }
 
     // Get password from stdin
     let password = match settings.password {
